@@ -38,3 +38,6 @@ coverage/
 # Cache files
 *.cache
 .cache/
+
+# Credentials
+.env
