@@ -6,7 +6,7 @@ class Order:
         self.customer_id = customer_id
         self.restaurant_id = restaurant_id
         self.items = []
-        self.status = "Pending"
+        self.status = "PENDING"
         self.scheduled_time = None
 
     def add_item(self, order_item):

@@ -22,6 +22,14 @@ Thumbs.db
 # Editor folders/files
 .vscode/
 .idea/
+.history
+
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.swp
+*.swo
 
 # Build output
 dist/

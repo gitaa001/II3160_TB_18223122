@@ -8,6 +8,9 @@ from src.domain.events.OrderDelivered import OrderDelivered
 
 class OrderService:
 
+    # ========================
+    #  CREATE ORDER
+    # ========================
     def create_order(self, customer_id: str, restaurant_id: str):
         order = Order(customer_id, restaurant_id)
         OrderRepository.save(order)
@@ -17,6 +20,9 @@ class OrderService:
 
         return order
 
+    # ========================
+    #  ADD ITEM
+    # ========================
     def add_item(self, order_id: str, menu_id: str, menu_name: str, price: int, quantity: int):
         order = OrderRepository.find(order_id)
         if not order:
@@ -28,6 +34,9 @@ class OrderService:
         OrderRepository.update(order)
         return order
 
+    # ========================
+    #  REMOVE ITEM
+    # ========================
     def remove_item(self, order_id: str, menu_id: str):
         order = OrderRepository.find(order_id)
         if not order:
@@ -38,6 +47,9 @@ class OrderService:
         OrderRepository.update(order)
         return order
 
+    # ========================
+    #  SCHEDULE ORDER
+    # ========================
     def schedule_order(self, order_id: str, datetime_str: str):
         order = OrderRepository.find(order_id)
         if not order:
@@ -46,19 +58,28 @@ class OrderService:
         time = ScheduledTime(datetime_str)
         order.set_scheduled_time(time)
 
+        # Update status → SCHEDULED
+        order.status = "SCHEDULED"
+
         OrderRepository.update(order)
         return order
 
+    # ========================
+    #  CANCEL ORDER
+    # ========================
     def cancel_order(self, order_id: str):
         order = OrderRepository.find(order_id)
         if not order:
             raise ValueError("Order not found")
 
-        order.status = "Canceled"
+        order.status = "CANCELED"
         OrderRepository.update(order)
 
         return order
 
+    # ========================
+    #  CHECKOUT
+    # ========================
     def checkout_order(self, order_id: str):
         order = OrderRepository.find(order_id)
         if not order:
@@ -67,31 +88,42 @@ class OrderService:
         if not order.scheduled_time:
             raise ValueError("Order must be scheduled before checkout")
 
-        order.status = "Pending"
+        # Update status → CHECKOUT
+        order.status = "CHECKOUT"
         OrderRepository.update(order)
 
         return order
 
+    # ========================
+    #  GET ORDER
+    # ========================
     def get_order(self, order_id: str):
         return OrderRepository.find(order_id)
 
+    # ========================
+    #  GET ORDERS BY CUSTOMER
+    # ========================
     def get_orders_by_customer(self, customer_id: str):
         return OrderRepository.find_by_customer_id(customer_id)
 
+    # ========================
+    #  DELIVER ORDER
+    # ========================
     def mark_delivered(self, order_id: str):
         order = OrderRepository.find(order_id)
         if not order:
             raise ValueError("Order not found")
 
-        # Domain rule: canceled orders cannot be delivered
-        if order.status == "Canceled":
-            raise ValueError("Canceled orders cannot be marked as delivered")
+        # Cannot deliver canceled orders
+        if order.status == "CANCELED":
+            raise ValueError("Canceled orders cannot be delivered")
 
-        # Domain rule: must be scheduled and checked out before delivery
-        if order.status not in ["Pending", "OnDelivery"]:
-            raise ValueError(f"Cannot deliver order in status {order.status}")
+        # Must have gone through checkout
+        if order.status != "CHECKOUT":
+            raise ValueError(f"Order must be CHECKOUT before delivery, current status: {order.status}")
 
-        order.status = "Completed"
+        # Update status → DELIVERED
+        order.status = "DELIVERED"
         OrderRepository.update(order)
 
         event = OrderDelivered(order_id)
